@@ -1,0 +1,231 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>NoirVibe | Cinematic Dark Movie Recommender</title>
+    <!-- Google Fonts + subtle font pairing -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome 6 (free icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- Canvas for particle animation -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Animated gradient orbs -->
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+
+    <!-- ambient overlay -->
+    <div class="ambient-overlay"></div>
+
+    <div class="cinema-container">
+        <!-- main content card -->
+        <main class="recommender-card">
+            <div class="brand">
+                <div class="icon-glow">
+                    <i class="fas fa-film"></i>
+                </div>
+                <h1 class="title">NoirVibe<span class="accent-dot">.</span></h1>
+                <p class="tagline">where shadows recommend masterpieces</p>
+                <div class="title-divider"></div>
+            </div>
+
+            <!-- recommender engine form -->
+            <form method="post" class="recommender-form">
+                <div class="input-group">
+                    <label for="movieInput">
+                        <i class="fas fa-mask"></i>
+                        <span>your favorite dark film</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="movieInput" name="movie"
+                            placeholder="e.g., Se7en, Blade Runner 2049, The Witch" autocomplete="off"
+                            list="movie-suggestions" class="movie-input">
+                        <datalist id="movie-suggestions">
+                            {% for movie in movie_list[0:] %}
+                            <option value="{{ movie }}">
+                                {% endfor %}
+                        </datalist>
+
+                        <button type="submit" id="submitBtn" class="search-btn">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>recommend</span>
+                        </button>
+                    </div>
+                    <div class="input-hint">enter a moody title — we'll find its cinematic siblings</div>
+                </div>
+            </form>
+
+            <div class="recommendations">
+                {% for i in range(1, movie_name|length) %}
+
+                <div class="movie-card">
+                    <div class="poster">
+                        <img src="{{ movie_poster[i] }}" alt="movie-image">
+                    </div>
+                    <div class="movie-info">
+                        <h3>{{ movie_name[i] }}</h3>
+                        <button class="watch-btn">Watch Vibe</button>
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
+
+            <!-- loading state -->
+            <div id="loadingState" class="loading-container hidden">
+                <div class="neon-spinner"></div>
+                <p class="loading-text">unlocking the vault of dark cinema...</p>
+            </div>
+
+            <!-- cinematic quote -->
+            <div class="cinema-quote">
+                <i class="fas fa-quote-left"></i>
+                <span id="randomQuote">"In darkness, every frame tells a secret."</span>
+                <i class="fas fa-quote-right"></i>
+            </div>
+        </main>
+
+        <!-- footer -->
+        <footer class="cinema-footer">
+            <p><i class="far fa-moon"></i> curated for lovers of shadows & storytelling</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==========================================
+        // BEAUTIFUL PARTICLE BACKGROUND ANIMATION
+        // ==========================================
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        }
+
+        function initParticles() {
+            const particleCount = Math.min(120, Math.floor(window.innerWidth / 15));
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 3 + 1,
+                    alpha: Math.random() * 0.4 + 0.1,
+                    speedX: (Math.random() - 0.5) * 0.4,
+                    speedY: (Math.random() - 0.5) * 0.3,
+                    pulseSpeed: Math.random() * 0.02 + 0.01,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    color: Math.random() > 0.7 ? '#c79b4b' : '#8a7a5a'
+                });
+            }
+        }
+
+        function animateParticles() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Create subtle gradient background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, 'rgba(5, 5, 12, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                // Pulsing effect
+                const pulse = Math.sin(Date.now() * p.pulseSpeed + p.pulsePhase) * 0.3 + 0.7;
+                const currentAlpha = p.alpha * pulse;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius * (0.8 + pulse * 0.2), 0, Math.PI * 2);
+
+                // Glow effect
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.fill();
+
+                // Inner glow
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 215, 150, ${currentAlpha * 0.8})`;
+                ctx.fill();
+
+                // Reset shadow
+                ctx.shadowBlur = 0;
+
+                // Move particles
+                p.x += p.speedX;
+                p.y += p.speedY;
+
+                // Wrap around edges
+                if (p.x < -50) p.x = canvas.width + 50;
+                if (p.x > canvas.width + 50) p.x = -50;
+                if (p.y < -50) p.y = canvas.height + 50;
+                if (p.y > canvas.height + 50) p.y = -50;
+
+                // Mouse interaction (particles move away from cursor)
+                const dx = mouseX - p.x;
+                const dy = mouseY - p.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 100) {
+                    const angle = Math.atan2(dy, dx);
+                    const force = (100 - distance) / 100 * 0.5;
+                    p.x -= Math.cos(angle) * force;
+                    p.y -= Math.sin(angle) * force;
+                }
+            });
+
+            // Draw connecting lines between nearby particles
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(199, 155, 75, 0.15)';
+            ctx.lineWidth = 0.5;
+
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        // Track mouse movement for interactive particles
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animateParticles();
+
+    </script>
+</body>
+
+</html>
