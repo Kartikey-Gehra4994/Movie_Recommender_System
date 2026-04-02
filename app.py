@@ -9,6 +9,23 @@ load_dotenv()
 
 app = Flask(__name__)
 
+# create Movies.pkl, similarity.pkl file if not exist
+def download_file(url, filename):
+    if not os.path.exists(filename):
+        print(f"Downloading {filename}...")
+        r = requests.get(url)
+        with open(filename, "wb") as f:
+            f.write(r.content)
+        print(f"{filename} Downloaded!")
+    
+# GitHub Release link
+movies_url = "https://github.com/Kartikey-Gehra4994/Movie_Recommender_System/releases/download/v1.0/movies.pkl"
+similarity_url = "https://github.com/Kartikey-Gehra4994/Movie_Recommender_System/releases/download/v1.0/similarity.pkl"
+
+# Download if not present
+download_file(movies_url, "movies.pkl")
+download_file(similarity_url, "similarity.pkl")
+
 # Load preprocessed data and similarity matrix
 new_df = pickle.load(open("movies.pkl", "rb"))
 similatity = pickle.load(open("similarity.pkl", "rb"))
@@ -82,6 +99,5 @@ def hello_world():
         movie_poster=movie_poster
     )
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
