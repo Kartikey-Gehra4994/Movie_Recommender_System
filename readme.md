@@ -3,6 +3,8 @@
 A simple web app that recommends movies based on your favorite movie.
 Built using **Flask, Machine Learning, and TMDB API**.
 
+🌐 Live Demo : https://movie-recommender-system-wzih.onrender.com
+
 ---
 
 ## 🚀 Features
